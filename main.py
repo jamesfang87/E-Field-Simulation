@@ -6,6 +6,13 @@ from charge_visualizer import ChargeVisualizer
 # Initialize Pygame
 pygame.init()
 
+# Constants
+INFO_PANEL_HEIGHT = 120
+PANEL_BG_COLOR = (0, 0, 0)
+SIMULATION_BG_COLOR = (0, 0, 0)
+TEXT_COLOR = (255, 255, 255)
+FONT_SIZE = 24
+
 # Set up the game window
 screen = pygame.display.set_mode((1200, 900))
 pygame.display.set_caption("E-field sim")
@@ -17,29 +24,33 @@ visualizer = ChargeVisualizer(screen)
 MODE_NORMAL = 0
 MODE_INSERT = 1
 MODE_EDIT = 2
-current_mode = MODE_NORMAL  # Start in normal mode
+current_mode = MODE_NORMAL
 
-# Define constants for font
-FONT_SIZE = 24
-font = pygame.font.SysFont(None, FONT_SIZE)
+# Font setup
+font = pygame.font.SysFont("Arial", FONT_SIZE)
 
-# Create multiple charges
+# Create charges
 charges = [
-    Charge(400, 300, 5),  # Positive charge
-    Charge(600, 450, -5),  # Negative charge
-    Charge(800, 400, 3),  # Positive charge
-    Charge(500, 600, -3),  # Negative charge
+    Charge(400, 300 + INFO_PANEL_HEIGHT, -5),
+    Charge(600, 450 + INFO_PANEL_HEIGHT, -5),
+    Charge(800, 400 + INFO_PANEL_HEIGHT, -3),
+    Charge(500, 600 + INFO_PANEL_HEIGHT, -3),
 ]
 
-# Track which charge is being dragged
+# State variables
 active_charge = None
-
-# Track selected charge
 selected_charge = None
+selected_charge_type = True
 
-# Track selected charge type for creation
-# (True for positive, False for negative)
-selected_charge_type = True  # Default to positive
+
+def clamp_charge_position(charge):
+    """Keep charges in simulation area"""
+    charge.x = max(charge.radius, min(1200 - charge.radius, charge.x))
+    charge.y = max(
+        INFO_PANEL_HEIGHT + charge.radius, min(900 - charge.radius, charge.y)
+    )
+
+
 # Game loop
 running = True
 while running:
@@ -116,6 +127,7 @@ while running:
                                 # Calculate offset from center to mouse pos
                                 c.offset_x = c.x - mouse_x
                                 c.offset_y = c.y - mouse_y
+                                clamp_charge_position(c)
                             charge_clicked = True
                             break
 
@@ -125,6 +137,8 @@ while running:
                         new_charge = Charge(mouse_x, mouse_y, 5)
                     else:
                         new_charge = Charge(mouse_x, mouse_y, -5)
+
+                    clamp_charge_position(new_charge)
 
                     # Start dragging the new charge (only in insert mode)
                     new_charge.dragging = True
@@ -145,62 +159,74 @@ while running:
                 mouse_x, mouse_y = event.pos
                 active_charge.x = mouse_x + active_charge.offset_x
                 active_charge.y = mouse_y + active_charge.offset_y
+                clamp_charge_position(active_charge)
 
-    # Draw background
-    screen.fill((255, 255, 255))  # White background
+            # Drawing
+    screen.fill(SIMULATION_BG_COLOR)  # Main background
+    pygame.draw.rect(
+        screen, PANEL_BG_COLOR, (0, 0, 1200, INFO_PANEL_HEIGHT)
+    )  # Info panel
 
-    # Display current mode
-    mode_texts = {
-        MODE_NORMAL: "Mode: Normal (Esc)",
-        MODE_INSERT: "Mode: Insert (i)",
-        MODE_EDIT: "Mode: Edit (e)",
-    }
-    mode_text = mode_texts[current_mode]
-    mode_surface = font.render(mode_text, True, (0, 0, 0))
-    screen.blit(mode_surface, (20, 10))
+    # Draw electric field
+    for x in range(visualizer.grid_spacing // 2, 1200, visualizer.grid_spacing):
+        for y in range(
+            INFO_PANEL_HEIGHT + visualizer.grid_spacing // 2,
+            900,
+            visualizer.grid_spacing,
+        ):
+            ex, ey = visualizer.calculate_electric_field(x, y, charges)
+            if ex != 0 or ey != 0:
+                visualizer.draw_arrow(x, y, ex * 0.0005, ey * 0.0005)
 
-    # Display second line of information for all modes
-    second_line_text = ""
-    if current_mode == MODE_NORMAL:
-        second_line_text = "View mode - no interaction with charges"
-    elif current_mode == MODE_INSERT:
-        # In insert mode, display the selected charge type
-        second_line_text = (
-            "Selected: Positive Charge (p)"
-            if selected_charge_type
-            else "Selected: Negative Charge (n)"
-        )
-    else:  # edit mode
-        second_line_text = "Selected Charge: " + (
-            "None"
-            if not selected_charge
-            else ("Positive" if selected_charge.charge > 0 else "Negative")
-        )
-
-    second_line_surface = font.render(second_line_text, True, (0, 0, 0))
-    screen.blit(second_line_surface, (20, 40))
-
-    # Display instructions based on mode
-    if current_mode == MODE_NORMAL:
-        instructions = "Press 'i' for insert mode, 'e' for edit mode"
-    elif current_mode == MODE_INSERT:
-        instructions = "Click anywhere to place charge. \
-                        Press 'p' for positive, 'n' for negative."
-    else:  # edit mode
-        instructions = "Click and drag charges to move them. \
-                        Press 'd' to remove selected charge, \
-                        't' to toggle charge polarity"
-
-    instruction_surface = font.render(instructions, True, (0, 0, 0))
-    screen.blit(instruction_surface, (20, 70))
-
-    # Use visualizer to draw charge preview in insert mode
-    if current_mode == MODE_INSERT:
-        visualizer.draw_charge_preview(selected_charge_type, active_charge)
-
-    # Use visualizer to draw all charges
+    # Draw charges
     visualizer.draw_charges(charges)
+
+    # Panel information
+    # Mode display
+    mode_text = {
+        MODE_NORMAL: "Normal Mode (ESC)",
+        MODE_INSERT: "Insert Mode (i)",
+        MODE_EDIT: "Edit Mode (e)",
+    }[current_mode]
+    screen.blit(font.render(mode_text, True, TEXT_COLOR), (20, 10))
+
+    # Charge status
+    status_text = ""
+    if current_mode == MODE_INSERT:
+        status_text = "Placing: " + (
+            "Positive (+) [p]" if selected_charge_type else "Negative (-) [n]"
+        )
+    elif current_mode == MODE_EDIT and selected_charge:
+        status_text = f"Selected: {'+' if selected_charge.charge > 0 else '-'}"
+        status_text += f"{abs(selected_charge.charge)} nC"
+    screen.blit(font.render(status_text, True, TEXT_COLOR), (20, 40))
+
+    # Instructions
+    instructions = []
+    if current_mode == MODE_NORMAL:
+        instructions = ["i: Insert Mode  |  e: Edit Mode  |  ESC: Normal Mode"]
+    elif current_mode == MODE_INSERT:
+        instructions = [
+            "Click: Place Charge  |  p/n: Change Type  |  ESC: Exit Insert"
+        ]
+    elif current_mode == MODE_EDIT:
+        instructions = [
+            "Drag: Move  |  d: Delete  |  t: Toggle  |  ESC: Exit Edit"
+        ]
+
+    # Render instructions
+    y_pos = 70
+    for line in instructions:
+        text_surface = font.render(line, True, TEXT_COLOR)
+        screen.blit(text_surface, (20, y_pos))
+        y_pos += FONT_SIZE + 2
+
+    # Charge preview in insert mode
+    if current_mode == MODE_INSERT:
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        if mouse_y > INFO_PANEL_HEIGHT:
+            visualizer.draw_charge_preview(selected_charge_type)
+
     pygame.display.flip()
 
-# Quit Pygame
 pygame.quit()
