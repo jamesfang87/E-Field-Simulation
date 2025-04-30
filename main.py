@@ -5,18 +5,8 @@ import pygame
 
 from charge import Charge
 from charge_visualizer import ChargeVisualizer
-from main_ui import UIManager
-from test_user import TestUserWindow
-
-# Constants
-INFO_PANEL_HEIGHT = 120
-PANEL_BG_COLOR = (0, 0, 0)
-SIMULATION_BG_COLOR = (0, 0, 0)
-TEXT_COLOR = (255, 255, 255)
-FONT_SIZE = 24
-TEST_BUTTON_RECT = pygame.Rect(1000, 10, 180, 40)
-TEST_BUTTON_COLOR = (50, 50, 50)
-TEST_BUTTON_HOVER_COLOR = (70, 70, 70)
+from test_user_win import TestUserWindow
+from ui_manager import UIManager
 
 # Mode constants
 MODE_NORMAL = 0
@@ -29,25 +19,32 @@ class Game:
         pygame.init()
         self.screen = pygame.display.set_mode((1200, 900))
         pygame.display.set_caption("E-field sim")
+
+        # Core components
         self.visualizer = ChargeVisualizer(self.screen)
         self.ui = UIManager(self.screen)
+
+        # Simulation state
         self.mode = MODE_NORMAL
-        self.selected_type = True  # True for positive
+        self.selected_type = True  # True = positive
         self.charges = [
-            Charge(400, 300 + INFO_PANEL_HEIGHT, -5),
-            Charge(600, 450 + INFO_PANEL_HEIGHT, -5),
-            Charge(800, 400 + INFO_PANEL_HEIGHT, -3),
-            Charge(500, 600 + INFO_PANEL_HEIGHT, -3),
+            Charge(400, 300 + self.ui.INFO_PANEL_HEIGHT, -5),
+            Charge(600, 450 + self.ui.INFO_PANEL_HEIGHT, -5),
+            Charge(800, 400 + self.ui.INFO_PANEL_HEIGHT, -3),
+            Charge(500, 600 + self.ui.INFO_PANEL_HEIGHT, -3),
         ]
-        self.active = None
-        self.selected = None
+        self.active_charge = None
+        self.selected_charge = None
         self.test_window = None
 
-    def clamp(self, c):
-        c.x = max(c.radius, min(self.screen.get_width() - c.radius, c.x))
-        c.y = max(
-            INFO_PANEL_HEIGHT + c.radius,
-            min(self.screen.get_height() - c.radius, c.y),
+    def clamp(self, charge):
+        charge.x = max(
+            charge.radius,
+            min(self.screen.get_width() - charge.radius, charge.x),
+        )
+        charge.y = max(
+            self.ui.INFO_PANEL_HEIGHT + charge.radius,
+            min(self.screen.get_height() - charge.radius, charge.y),
         )
 
     def handle_events(self):
@@ -55,73 +52,75 @@ class Game:
             if event.type == pygame.QUIT:
                 return False
 
+            # Test window interaction delegated to UI
             if self.test_window and self.test_window.active:
                 self.test_window.handle_event(event)
-                self.test_window.draw(self.screen)
-                pygame.display.flip()
+                self.ui.draw_test_window(self.test_window)
                 continue
 
             if event.type == pygame.KEYDOWN:
                 self._handle_key(event)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                self._handle_click(event.pos)
+                self._handle_mouse_down(event.pos)
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                if self.active:
-                    self.active.dragging = False
-                    self.active = None
-            elif event.type == pygame.MOUSEMOTION:
-                if self.active:
-                    mx, my = event.pos
-                    self.active.x = mx + self.active.offset_x
-                    self.active.y = my + self.active.offset_y
-                    self.clamp(self.active)
+                if self.active_charge:
+                    self.active_charge.dragging = False
+                    self.active_charge = None
+            elif event.type == pygame.MOUSEMOTION and self.active_charge:
+                mx, my = event.pos
+                self.active_charge.x = mx + self.active_charge.offset_x
+                self.active_charge.y = my + self.active_charge.offset_y
+                self.clamp(self.active_charge)
+
         return True
 
     def _handle_key(self, event):
-        key = event.key
-        if key == pygame.K_p:
+        k = event.key
+        if k == pygame.K_p:
             self.selected_type = True
-        elif key == pygame.K_n:
+        elif k == pygame.K_n:
             self.selected_type = False
-        elif key == pygame.K_i:
+        elif k == pygame.K_i:
             self.mode = MODE_INSERT
-        elif key == pygame.K_e:
+        elif k == pygame.K_e:
             self.mode = MODE_EDIT
-        elif key == pygame.K_ESCAPE:
+        elif k == pygame.K_ESCAPE:
             self.mode = MODE_NORMAL
             for c in self.charges:
                 c.selected = False
-            self.selected = None
-        elif key == pygame.K_d and self.mode == MODE_EDIT and self.selected:
-            self.charges.remove(self.selected)
-            self.selected = None
-        elif key == pygame.K_t and self.mode == MODE_EDIT and self.selected:
-            self.selected.charge *= -1
-            self.selected.color = (
-                (255, 0, 0) if self.selected.charge > 0 else (0, 0, 255)
+            self.selected_charge = None
+        elif k == pygame.K_d and self.mode == MODE_EDIT and self.selected_charge:
+            self.charges.remove(self.selected_charge)
+            self.selected_charge = None
+        elif k == pygame.K_t and self.mode == MODE_EDIT and self.selected_charge:
+            self.selected_charge.charge *= -1
+            self.selected_charge.color = (
+                (255, 0, 0) if self.selected_charge.charge > 0 else (0, 0, 255)
             )
 
-    def _handle_click(self, pos):
+    def _handle_mouse_down(self, pos):
         x, y = pos
         # Test button
         if self.ui.test_button_rect.collidepoint(pos):
-            self._spawn_test()
+            self._spawn_test_point()
             return
-        # Edit mode selection
+
+        # Edit mode: select & drag
         if self.mode == MODE_EDIT:
             for c in self.charges:
                 c.selected = False
             for c in self.charges:
                 if (x - c.x) ** 2 + (y - c.y) ** 2 <= c.radius**2:
                     c.selected = True
-                    self.selected = c
+                    self.selected_charge = c
                     c.dragging = True
                     c.offset_x = c.x - x
                     c.offset_y = c.y - y
                     self.clamp(c)
-                    self.active = c
+                    self.active_charge = c
                     return
-        # Insert mode creation
+
+        # Insert mode: create new charge
         if self.mode == MODE_INSERT:
             new = Charge(x, y, 5 if self.selected_type else -5)
             self.clamp(new)
@@ -129,53 +128,49 @@ class Game:
             new.offset_x = 0
             new.offset_y = 0
             self.charges.append(new)
-            self.active = new
+            self.active_charge = new
 
-    def _spawn_test(self):
-        margin = 50
-        tx = random.randint(margin, self.screen.get_width() - margin)
-        ty = random.randint(
-            INFO_PANEL_HEIGHT + margin, self.screen.get_height() - margin
-        )
+    def _spawn_test_point(self):
+        m = 50
+        tx = random.randint(m, self.screen.get_width() - m)
+        ty = random.randint(self.ui.INFO_PANEL_HEIGHT + m, self.screen.get_height() - m)
         ex, ey = self.visualizer.calculate_electric_field(tx, ty, self.charges)
         mag = math.hypot(ex, ey)
         self.test_window = TestUserWindow(tx, ty, mag, self.charges)
 
     def draw(self):
-        self.screen.fill(SIMULATION_BG_COLOR)
-        # field
+        self.screen.fill(self.ui.SIMULATION_BG_COLOR)
+
+        # Draw the field arrows and charges
         for x in range(
             self.visualizer.grid_spacing // 2,
             self.screen.get_width(),
             self.visualizer.grid_spacing,
         ):
             for y in range(
-                INFO_PANEL_HEIGHT + self.visualizer.grid_spacing // 2,
+                self.ui.INFO_PANEL_HEIGHT + self.visualizer.grid_spacing // 2,
                 self.screen.get_height(),
                 self.visualizer.grid_spacing,
             ):
-                ex, ey = self.visualizer.calculate_electric_field(
-                    x, y, self.charges
-                )
+                ex, ey = self.visualizer.calculate_electric_field(x, y, self.charges)
                 if ex or ey:
                     self.visualizer.draw_arrow(x, y, ex * 0.00005, ey * 0.00005)
-        # charges
         self.visualizer.draw_charges(self.charges)
-        # UI
-        self.ui.draw_panel(self.mode, self.selected, self.selected_type)
-        # insert preview
-        if self.mode == MODE_INSERT:
-            _, my = pygame.mouse.get_pos()
-            if my > INFO_PANEL_HEIGHT:
-                self.visualizer.draw_charge_preview(self.selected_type)
+
+        # Delegate all UI drawing
+        self.ui.draw_panel(self.mode, self.selected_charge, self.selected_type)
+        self.ui.draw_insert_preview(self.mode, self.selected_type)
+
         pygame.display.flip()
 
     def run(self):
+        clock = pygame.time.Clock()
         running = True
         while running:
             running = self.handle_events()
             if not (self.test_window and self.test_window.active):
                 self.draw()
+            clock.tick(60)
         pygame.quit()
 
 
