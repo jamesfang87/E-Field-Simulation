@@ -23,7 +23,7 @@ MODE_INSERT = 1
 MODE_EDIT = 2
 
 
-class UI:
+class MainWindow:
     def __init__(self, screen, visualizer=None):
         self.screen = screen
         self.visualizer = visualizer

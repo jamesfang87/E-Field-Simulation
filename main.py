@@ -5,9 +5,9 @@ from copy import deepcopy
 import pygame
 
 from charge import Charge
+from main_window import MainWindow
 from physics import calculate_electric_field
-from test_ui import TestWindow
-from ui import UI
+from test_window import TestWindow
 
 # Mode constants
 MODE_NORMAL = 0
@@ -25,7 +25,7 @@ class Game:
         pygame.display.set_caption("E-field sim")
 
         # Core components
-        self.ui = UI(self.screen)
+        self.ui = MainWindow(self.screen)
 
         # Simulation state
         self.mode = MODE_NORMAL
