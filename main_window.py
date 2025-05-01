@@ -52,9 +52,7 @@ class MainWindow:
         # Status label
         status = ""
         if mode == MODE_INSERT:
-            status = "Placing: " + (
-                "Positive (+) [p]" if selected_type else "Negative (-) [n]"
-            )
+            status = "Placing: " + ("Positive (+) [p]" if selected_type else "Negative (-) [n]")
         elif mode == MODE_EDIT and selected_charge:
             status = (
                 f"Selected: {'+' if selected_charge.charge > 0 else '-'}"
@@ -120,13 +118,9 @@ class MainWindow:
 
         # draw directly with a light color
         for x in range(sim_rect.left, sim_rect.right + 1, GRID_SPACING):
-            pygame.draw.line(
-                self.screen, GRID_COLOR, (x, sim_rect.top), (x, sim_rect.bottom)
-            )
+            pygame.draw.line(self.screen, GRID_COLOR, (x, sim_rect.top), (x, sim_rect.bottom))
         for y in range(sim_rect.top, sim_rect.bottom + 1, GRID_SPACING):
-            pygame.draw.line(
-                self.screen, GRID_COLOR, (sim_rect.left, y), (sim_rect.right, y)
-            )
+            pygame.draw.line(self.screen, GRID_COLOR, (sim_rect.left, y), (sim_rect.right, y))
 
     def draw_field(self, charges):
         width, height = self.screen.get_size()
@@ -148,9 +142,7 @@ class MainWindow:
         # Arrow shaft
         end_x = x + dx
         end_y = y + dy
-        pygame.draw.line(
-            self.screen, self.arrow_color, (x, y), (end_x, end_y), 2
-        )
+        pygame.draw.line(self.screen, self.arrow_color, (x, y), (end_x, end_y), 2)
 
         # Arrow head
         arrow_size = 6
@@ -163,6 +155,4 @@ class MainWindow:
             end_x - arrow_size * math.cos(angle + math.pi / 6),
             end_y - arrow_size * math.sin(angle + math.pi / 6),
         )
-        pygame.draw.polygon(
-            self.screen, self.arrow_color, [(end_x, end_y), p1, p2]
-        )
+        pygame.draw.polygon(self.screen, self.arrow_color, [(end_x, end_y), p1, p2])

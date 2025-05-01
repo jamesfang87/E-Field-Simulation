@@ -12,12 +12,8 @@ class TestWindow:
         self.test_point = (x, y)
         self.charges = charges
         # Buttons
-        self.close_button = pygame.Rect(
-            self.rect.right - 40, self.rect.y + 10, 30, 30
-        )
-        self.submit_button = pygame.Rect(
-            self.rect.centerx - 50, self.rect.bottom - 80, 100, 40
-        )
+        self.close_button = pygame.Rect(self.rect.right - 40, self.rect.y + 10, 30, 30)
+        self.submit_button = pygame.Rect(self.rect.centerx - 50, self.rect.bottom - 80, 100, 40)
         self.ui = ui_manager  # optional UIManager for centered draw
 
     def handle_event(self, event):
@@ -79,7 +75,9 @@ class TestWindow:
         )
         y += 40
         for i, c in enumerate(self.charges):
-            info = f"Charge {i + 1}: ({c.x}, {c.y}): {'+' if c.charge > 0 else '-'}{abs(c.charge)} mC"
+            info = (
+                f"Charge {i + 1}: ({c.x}, {c.y}): {'+' if c.charge > 0 else '-'}{abs(c.charge)} mC"
+            )
             screen.blit(
                 self.font.render(info, True, (255, 255, 255)),
                 (self.rect.x + 40, y),

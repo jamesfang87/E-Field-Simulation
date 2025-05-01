@@ -98,14 +98,10 @@ class Game:
             for c in self.charges:
                 c.selected = False
             self.selected_charge = None
-        elif (
-            k == pygame.K_d and self.mode == MODE_EDIT and self.selected_charge
-        ):
+        elif k == pygame.K_d and self.mode == MODE_EDIT and self.selected_charge:
             self.charges.remove(self.selected_charge)
             self.selected_charge = None
-        elif (
-            k == pygame.K_t and self.mode == MODE_EDIT and self.selected_charge
-        ):
+        elif k == pygame.K_t and self.mode == MODE_EDIT and self.selected_charge:
             self.selected_charge.charge *= -1
             self.selected_charge.color = (
                 (255, 0, 0) if self.selected_charge.charge > 0 else (0, 0, 255)
@@ -183,9 +179,7 @@ class Game:
             charge.draw(self.screen)
 
         # Draw instruction panel
-        self.ui.draw_panel(
-            self.mode, self.selected_charge, self.selected_polarity
-        )
+        self.ui.draw_panel(self.mode, self.selected_charge, self.selected_polarity)
 
         if self.mode == MODE_INSERT:
             self.ui.draw_insert_preview(self.selected_polarity)
