@@ -2,12 +2,12 @@ import math
 
 
 def calculate_electric_field(x, y, charges):
-    k = 8.988e9  # N·m²/C² (scaled down for visualization)
+    k = 8.988e9  # N·m²/C²
     total_ex = 0
     total_ey = 0
 
     for charge in charges:
-        q = charge.charge
+        q = charge.charge * 1e-3
         dx = x - charge.x
         dy = y - charge.y
         r_sq = dx**2 + dy**2
@@ -28,7 +28,7 @@ def calculate_voltage(x, y, charges):
     k = 8.988e9  # Coulomb's constant
     total_voltage = 0
     for charge in charges:
-        q = charge.charge
+        q = charge.charge * 1e-6
         r = math.dist([x, y], [charge.x, charge.y])
         if r > 0:  # Avoid division by zero
             total_voltage += k * q / r

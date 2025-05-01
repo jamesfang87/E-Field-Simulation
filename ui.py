@@ -23,7 +23,7 @@ MODE_INSERT = 1
 MODE_EDIT = 2
 
 
-class UIManager:
+class UI:
     def __init__(self, screen, visualizer=None):
         self.screen = screen
         self.visualizer = visualizer
@@ -52,11 +52,13 @@ class UIManager:
         # Status label
         status = ""
         if mode == MODE_INSERT:
-            status = "Placing: " + ("Positive (+) [p]" if selected_type else "Negative (-) [n]")
+            status = "Placing: " + (
+                "Positive (+) [p]" if selected_type else "Negative (-) [n]"
+            )
         elif mode == MODE_EDIT and selected_charge:
             status = (
                 f"Selected: {'+' if selected_charge.charge > 0 else '-'}"
-                f"{abs(selected_charge.charge)} nC"
+                f"{abs(selected_charge.charge)} mC"
             )
         if status:
             self._blit_text(status, 20, 40)
@@ -74,13 +76,14 @@ class UIManager:
         # Draw Test Point button
         self._draw_button(self.test_button_rect, "Test Point")
 
-    def draw_insert_preview(self, mode, selected_type):
-        # Preview new charge icon in insert mode
-        if mode != MODE_INSERT or not self.visualizer:
-            return
+    def draw_insert_preview(self, selected_polarity):
         _, my = pygame.mouse.get_pos()
         if my > INFO_PANEL_HEIGHT:
-            self.visualizer.draw_charge_preview(selected_type)
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            preview_color = (255, 0, 0) if selected_polarity else (0, 0, 255)
+            pygame.draw.circle(
+                self.screen, preview_color, (mouse_x, mouse_y), 15, 2
+            )  # Draw outline only
 
     def draw_test_window(self, test_window):
         # Overlay test-window popup
@@ -108,24 +111,31 @@ class UIManager:
         self.screen.fill(SIMULATION_BG_COLOR)
         info_h = INFO_PANEL_HEIGHT
         sim_rect = pygame.Rect(
-            0, info_h, self.screen.get_width(), self.screen.get_height() - info_h
+            0,
+            info_h,
+            self.screen.get_width(),
+            self.screen.get_height() - info_h,
         )
         pygame.draw.rect(self.screen, SIMULATION_BG_COLOR, sim_rect)
 
         # draw directly with a light color
         for x in range(sim_rect.left, sim_rect.right + 1, GRID_SPACING):
-            pygame.draw.line(self.screen, GRID_COLOR, (x, sim_rect.top), (x, sim_rect.bottom))
+            pygame.draw.line(
+                self.screen, GRID_COLOR, (x, sim_rect.top), (x, sim_rect.bottom)
+            )
         for y in range(sim_rect.top, sim_rect.bottom + 1, GRID_SPACING):
-            pygame.draw.line(self.screen, GRID_COLOR, (sim_rect.left, y), (sim_rect.right, y))
+            pygame.draw.line(
+                self.screen, GRID_COLOR, (sim_rect.left, y), (sim_rect.right, y)
+            )
 
     def draw_field(self, charges):
         width, height = self.screen.get_size()
         for x in range(0, width, GRID_SPACING):
             for y in range(INFO_PANEL_HEIGHT, height, GRID_SPACING):
-                ex, ey = calculate_electric_field(x, y, charges)
                 # add half of grid spacing
                 d = GRID_SPACING / 2
-                self.draw_arrow(x + d, y + d, ex * 0.00005, ey * 0.00005)
+                ex, ey = calculate_electric_field(x + d, y + d, charges)
+                self.draw_arrow(x + d, y + d, ex * 0.05, ey * 0.05)
 
     def draw_arrow(self, x, y, dx, dy):
         # Cap the arrow length
@@ -138,7 +148,9 @@ class UIManager:
         # Arrow shaft
         end_x = x + dx
         end_y = y + dy
-        pygame.draw.line(self.screen, self.arrow_color, (x, y), (end_x, end_y), 2)
+        pygame.draw.line(
+            self.screen, self.arrow_color, (x, y), (end_x, end_y), 2
+        )
 
         # Arrow head
         arrow_size = 6
@@ -151,4 +163,6 @@ class UIManager:
             end_x - arrow_size * math.cos(angle + math.pi / 6),
             end_y - arrow_size * math.sin(angle + math.pi / 6),
         )
-        pygame.draw.polygon(self.screen, self.arrow_color, [(end_x, end_y), p1, p2])
+        pygame.draw.polygon(
+            self.screen, self.arrow_color, [(end_x, end_y), p1, p2]
+        )

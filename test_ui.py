@@ -1,7 +1,7 @@
 import pygame
 
 
-class TestUserWindow:
+class TestWindow:
     def __init__(self, x, y, correct_answer, charges, ui_manager=None):
         self.rect = pygame.Rect(200, 100, 800, 500)
         self.active = True
@@ -12,8 +12,12 @@ class TestUserWindow:
         self.test_point = (x, y)
         self.charges = charges
         # Buttons
-        self.close_button = pygame.Rect(self.rect.right - 40, self.rect.y + 10, 30, 30)
-        self.submit_button = pygame.Rect(self.rect.centerx - 50, self.rect.bottom - 80, 100, 40)
+        self.close_button = pygame.Rect(
+            self.rect.right - 40, self.rect.y + 10, 30, 30
+        )
+        self.submit_button = pygame.Rect(
+            self.rect.centerx - 50, self.rect.bottom - 80, 100, 40
+        )
         self.ui = ui_manager  # optional UIManager for centered draw
 
     def handle_event(self, event):
@@ -63,14 +67,23 @@ class TestUserWindow:
         # Content
         y = self.rect.y + 20
         coord = f"Calculate the field at: ({self.test_point[0]}, {self.test_point[1]})"
-        screen.blit(self.font.render(coord, True, (255, 255, 255)), (self.rect.x + 20, y))
+        screen.blit(
+            self.font.render(coord, True, (255, 255, 255)),
+            (self.rect.x + 20, y),
+        )
         y += 40
         header = "Charges in Simulation:"
-        screen.blit(self.font.render(header, True, (255, 255, 255)), (self.rect.x + 20, y))
+        screen.blit(
+            self.font.render(header, True, (255, 255, 255)),
+            (self.rect.x + 20, y),
+        )
         y += 40
         for i, c in enumerate(self.charges):
-            info = f"Charge {i+1}: ({c.x}, {c.y}): {'+' if c.charge > 0 else '-'}{abs(c.charge)} nC"
-            screen.blit(self.font.render(info, True, (255, 255, 255)), (self.rect.x + 40, y))
+            info = f"Charge {i + 1}: ({c.x}, {c.y}): {'+' if c.charge > 0 else '-'}{abs(c.charge)} mC"
+            screen.blit(
+                self.font.render(info, True, (255, 255, 255)),
+                (self.rect.x + 40, y),
+            )
             y += 35
 
         # Input field
@@ -96,4 +109,7 @@ class TestUserWindow:
         # Message
         if self.message:
             color = (0, 255, 0) if "Correct" in self.message else (255, 0, 0)
-            screen.blit(self.font.render(self.message, True, color), (self.rect.x + 20, y))
+            screen.blit(
+                self.font.render(self.message, True, color),
+                (self.rect.x + 20, y),
+            )
