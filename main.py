@@ -5,6 +5,7 @@ import pygame
 
 from charge import Charge
 from charge_visualizer import ChargeVisualizer
+from physics import calculate_electric_field
 from test_user_win import TestUserWindow
 from ui_manager import UIManager
 
@@ -13,11 +14,13 @@ MODE_NORMAL = 0
 MODE_INSERT = 1
 MODE_EDIT = 2
 
+NUM_CHARGES = 4
+
 
 class Game:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((1200, 900))
+        self.screen = pygame.display.set_mode((1200, 820))
         pygame.display.set_caption("E-field sim")
 
         # Core components
@@ -26,18 +29,21 @@ class Game:
 
         # Simulation state
         self.mode = MODE_NORMAL
-        self.selected_type = True  # True = positive
-        self.charges = [
-            Charge(400, 300 + self.ui.INFO_PANEL_HEIGHT, -5),
-            Charge(600, 450 + self.ui.INFO_PANEL_HEIGHT, -5),
-            Charge(800, 400 + self.ui.INFO_PANEL_HEIGHT, -3),
-            Charge(500, 600 + self.ui.INFO_PANEL_HEIGHT, -3),
-        ]
+        self.selected_polarity = True  # True = positive
+
+        self.charges = []
+        for _ in range(NUM_CHARGES):
+            # Use a random distribution to gen positions of charges
+            x = round(random.gauss(600, 150), 2)
+            y = round(random.gauss(400, 150), 2)
+            # randomly choose +5 or -5
+            q = 5 if random.choice((True, False)) else -5
+            self.charges.append(Charge(x, y, q))
         self.active_charge = None
         self.selected_charge = None
         self.test_window = None
 
-    def clamp(self, charge):
+    def _clamp(self, charge):
         charge.x = max(
             charge.radius,
             min(self.screen.get_width() - charge.radius, charge.x),
@@ -70,16 +76,16 @@ class Game:
                 mx, my = event.pos
                 self.active_charge.x = mx + self.active_charge.offset_x
                 self.active_charge.y = my + self.active_charge.offset_y
-                self.clamp(self.active_charge)
+                self._clamp(self.active_charge)
 
         return True
 
     def _handle_key(self, event):
         k = event.key
         if k == pygame.K_p:
-            self.selected_type = True
+            self.selected_polarity = True
         elif k == pygame.K_n:
-            self.selected_type = False
+            self.selected_polarity = False
         elif k == pygame.K_i:
             self.mode = MODE_INSERT
         elif k == pygame.K_e:
@@ -116,14 +122,14 @@ class Game:
                     c.dragging = True
                     c.offset_x = c.x - x
                     c.offset_y = c.y - y
-                    self.clamp(c)
+                    self._clamp(c)
                     self.active_charge = c
                     return
 
         # Insert mode: create new charge
         if self.mode == MODE_INSERT:
-            new = Charge(x, y, 5 if self.selected_type else -5)
-            self.clamp(new)
+            new = Charge(x, y, 5 if self.selected_polarity else -5)
+            self._clamp(new)
             new.dragging = True
             new.offset_x = 0
             new.offset_y = 0
@@ -134,32 +140,21 @@ class Game:
         m = 50
         tx = random.randint(m, self.screen.get_width() - m)
         ty = random.randint(self.ui.INFO_PANEL_HEIGHT + m, self.screen.get_height() - m)
-        ex, ey = self.visualizer.calculate_electric_field(tx, ty, self.charges)
+        ex, ey = calculate_electric_field(tx, ty, self.charges)
         mag = math.hypot(ex, ey)
         self.test_window = TestUserWindow(tx, ty, mag, self.charges)
 
     def draw(self):
-        self.screen.fill(self.ui.SIMULATION_BG_COLOR)
+        # First draw the grid
+        self.ui.draw_grid()
 
         # Draw the field arrows and charges
-        for x in range(
-            self.visualizer.grid_spacing // 2,
-            self.screen.get_width(),
-            self.visualizer.grid_spacing,
-        ):
-            for y in range(
-                self.ui.INFO_PANEL_HEIGHT + self.visualizer.grid_spacing // 2,
-                self.screen.get_height(),
-                self.visualizer.grid_spacing,
-            ):
-                ex, ey = self.visualizer.calculate_electric_field(x, y, self.charges)
-                if ex or ey:
-                    self.visualizer.draw_arrow(x, y, ex * 0.00005, ey * 0.00005)
+        self.ui.draw_field(self.charges)
         self.visualizer.draw_charges(self.charges)
 
         # Delegate all UI drawing
-        self.ui.draw_panel(self.mode, self.selected_charge, self.selected_type)
-        self.ui.draw_insert_preview(self.mode, self.selected_type)
+        self.ui.draw_panel(self.mode, self.selected_charge, self.selected_polarity)
+        self.ui.draw_insert_preview(self.mode, self.selected_polarity)
 
         pygame.display.flip()
 
