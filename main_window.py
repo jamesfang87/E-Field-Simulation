@@ -58,7 +58,7 @@ class MainWindow:
         elif mode == MODE_EDIT and selected_charge:
             status = (
                 f"Selected: {'+' if selected_charge.charge > 0 else '-'}"
-                f"{abs(selected_charge.charge)} mC"
+                f"{abs(selected_charge.charge)} nC"
             )
         if status:
             self._blit_text(status, 20, 40)
@@ -135,7 +135,7 @@ class MainWindow:
                 # add half of grid spacing
                 d = GRID_SPACING / 2
                 ex, ey = calculate_electric_field(x + d, y + d, charges)
-                self.draw_arrow(x + d, y + d, ex * 0.05, ey * 0.05)
+                self.draw_arrow(x + d, y + d, ex * 75000, ey * 75000)
 
     def draw_arrow(self, x, y, dx, dy):
         # Cap the arrow length

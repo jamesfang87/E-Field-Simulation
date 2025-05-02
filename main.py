@@ -5,6 +5,7 @@ from copy import deepcopy
 import pygame
 
 from charge import Charge
+from display_voltage import display_voltage
 from main_window import MainWindow
 from physics import calculate_electric_field
 from test_window import TestWindow
@@ -89,6 +90,13 @@ class Game:
             self.selected_polarity = True
         elif k == pygame.K_n:
             self.selected_polarity = False
+        elif k == pygame.K_z:
+            temp_charges = deepcopy(self.charges)
+            for charge in temp_charges:
+                charge.x = round((charge.x - 600) * PIXELS_TO_METERS, 2)
+                charge.y = round((charge.y - 350) * PIXELS_TO_METERS, 2)
+
+            display_voltage(temp_charges)
         elif k == pygame.K_i:
             self.mode = MODE_INSERT
         elif k == pygame.K_e:
