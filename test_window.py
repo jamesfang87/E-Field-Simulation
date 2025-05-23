@@ -75,9 +75,7 @@ class TestWindow:
         )
         y += 40
         for i, c in enumerate(self.charges):
-            info = (
-                f"Charge {i + 1}: ({c.x}, {c.y}): {'+' if c.charge > 0 else '-'}{abs(c.charge)} mC"
-            )
+            info = f"Charge {i + 1}: ({c.x}, {c.y}): {'+' if c.charge > 0 else '-'}{abs(c.charge)} nC"
             screen.blit(
                 self.font.render(info, True, (255, 255, 255)),
                 (self.rect.x + 40, y),
