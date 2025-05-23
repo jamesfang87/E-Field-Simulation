@@ -90,7 +90,7 @@ class Game:
             self.selected_polarity = True
         elif k == pygame.K_n:
             self.selected_polarity = False
-        elif k == pygame.K_z:
+        elif k == pygame.K_v:
             temp_charges = deepcopy(self.charges)
             for charge in temp_charges:
                 charge.x = round((charge.x - 600) * PIXELS_TO_METERS, 2)

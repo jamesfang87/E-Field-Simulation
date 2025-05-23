@@ -23,7 +23,7 @@ def display_voltage(charges):
     # Surface plot
     surf = ax.plot_surface(X, Y, Z, cmap="viridis")
     fig.colorbar(surf)
-    ax.set_title("Electric Potential Field")
+    ax.set_title("Voltage")
     ax.set_xlabel("X Position")
     ax.set_ylabel("Y Position")
     ax.set_zlabel("Voltage")
