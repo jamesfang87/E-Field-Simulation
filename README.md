@@ -1,6 +1,6 @@
 # Electric Field Simulator
 
-An interactive electric field simulator that allows users to visualize and manipulate electric fields created by point charges in a 2D space. The simulator provides real-time visualization of electric fields, 3D voltage plotting, and tools for measuring field strength at specific points.
+An interactive electric field simulator that allows students to visualize and manipulate electric fields created by point charges in a 2D space. The simulator provides real-time visualization of electric fields, 3D voltage plotting, and tools for measuring field strength at specific points.
 
 ## Features
 
@@ -35,6 +35,10 @@ An interactive electric field simulator that allows users to visualize and manip
 Run the simulator by executing the main script:
 ```bash
 python main.py
+```
+or
+```base
+python3 main.py
 ```
 
 ### Controls
