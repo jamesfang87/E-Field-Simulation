@@ -86,9 +86,9 @@ class Game:
 
     def _handle_key(self, event):
         k = event.key
-        if k == pygame.K_p:
+        if k == pygame.K_p and self.mode == MODE_INSERT:
             self.selected_polarity = True
-        elif k == pygame.K_n:
+        elif k == pygame.K_n and self.mode == MODE_INSERT:
             self.selected_polarity = False
         elif k == pygame.K_v:
             temp_charges = deepcopy(self.charges)
